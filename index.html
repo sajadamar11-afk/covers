@@ -160,7 +160,7 @@ progress{width:100%;height:10px;margin-top:9px}
 
 <header>
   <h1>تصميم أغلفة الدفاتر والسجلات</h1>
-  <div class="sub" id="devLine">برمجة وتطوير</div>
+  <div class="sub" id="devLine">تطوير وتصميم: سجاد الزويني</div>
 </header>
 
 <div id="tools">
@@ -356,7 +356,7 @@ progress{width:100%;height:10px;margin-top:9px}
       </select>
 
       <label class="f">سطر ١ (اسم المكتبة مثلاً)</label>
-      <input class="fld" id="bL1" value="مكتبة النور للطباعة">
+      <input class="fld" id="bL1" value="تطوير وتصميم: سجاد الزويني">
       <label class="f">سطر ٢ (الهاتف)</label>
       <input class="fld" id="bL2" value="07700000000">
       <label class="f">سطر ٣ (عبارة)</label>
@@ -522,7 +522,7 @@ progress{width:100%;height:10px;margin-top:9px}
 <script>
 "use strict";
 const PASSWORD = "1234";
-const DEVELOPER = "برمجة وتطوير";
+const DEVELOPER = "تطوير وتصميم: سجاد الزويني";
 const WHATSAPP  = "";
 
 const $ = id => document.getElementById(id);
@@ -1345,14 +1345,13 @@ function centerText(x,text,cx,cy,px,color,weight){
   x.fillStyle=color; x.fillText(text,cx,cy);
 }
 
-const W_REF=1;   // يُضرب بعرض اللوحة داخل الرسم
 function state(){
-  const n=id=>parseFloat($(id).value)||0;
+  const n=id=>{ const el=$(id); return el?(parseFloat(el.value)||0):0; };
   return {
     w:n("cw")||21, h:n("ch")||29.7,
     title:$("fTitle").value, name:$("fName").value,
     l2:$("fL2").value, l3:$("fL3").value, l4:$("fL4").value, l5:$("fL5").value,
-    ffs:n("ffs")>0 ? n("ffs")/100*W_REF : 0,
+    ffs:0,
     fx:n("fx")/100, fy:n("fy")/100, fw:n("fw")/100, fh:n("fh")/100,
     cName:$("cName").value, cSub:$("cSub").value
   };
