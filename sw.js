@@ -1,5 +1,5 @@
 /* نظام طباعة الهويات — عامل الخدمة (تشغيل بدون إنترنت) */
-const CACHE = "cover-designer-v10";
+const CACHE = "cover-designer-v11";
 const FILES = [
   "./",
   "./index.html",
