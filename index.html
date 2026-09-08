@@ -336,6 +336,12 @@ progress{width:100%;height:10px;margin-top:9px}
         <input type="range" id="fw" min="20" max="100" step="1" value="80"></div>
       <div class="sld"><div class="top"><span>ارتفاعها</span><b id="vFh">26</b></div>
         <input type="range" id="fh" min="8" max="60" step="1" value="26"></div>
+      <div class="sld"><div class="top"><span>حجم خط الخانة</span><b id="vFfs">تلقائي</b></div>
+        <input type="range" id="ffs" min="0" max="9" step="0.2" value="0"></div>
+      <div class="row">
+        <button class="tiny" id="fBig" style="flex:1">⤢ تكبير الخانة</button>
+        <button class="tiny" id="fSml" style="flex:1">⤡ تصغير الخانة</button>
+      </div>
       <div class="row"><button class="tiny" id="lReset">↺ التخطيط الافتراضي</button></div>
     </div>
   </section>
@@ -871,7 +877,7 @@ function fieldsBox(x,W,H,X,Y,BW,BH,rows,line,ink,fs){
   const n=Math.max(1,rows.length);
   // حجم الخط: إمّا المحدد يدوياً أو يُحسب ليناسب ارتفاع الخانة
   const auto = (BH/n)*0.42;
-  const size = fs ? fs : Math.min(W*.055, auto);
+  const size = (fs && fs>0) ? W*fs/100 : Math.min(W*.055, auto);
   const step = BH/(n+0.35);
   x.direction="rtl";
 
@@ -1351,7 +1357,7 @@ function state(){
     w:n("cw")||21, h:n("ch")||29.7,
     title:$("fTitle").value, name:$("fName").value,
     l2:$("fL2").value, l3:$("fL3").value, l4:$("fL4").value, l5:$("fL5").value,
-    ffs:0,
+    ffs:n("ffs"),
     fx:n("fx")/100, fy:n("fy")/100, fw:n("fw")/100, fh:n("fh")/100,
     cName:$("cName").value, cSub:$("cSub").value
   };
@@ -1564,6 +1570,26 @@ $("subject").addEventListener("change",()=>{
   });
 });
 $("shape").addEventListener("change",()=>{ pushLayer(); render(); });
+$("ffs").addEventListener("input",()=>{
+  const v=+$("ffs").value;
+  $("vFfs").textContent = v>0 ? v.toFixed(1) : "تلقائي";
+  render();
+});
+function boxScale(k){
+  const cx=+$("fx").value + (+$("fw").value)/2;
+  const cy=+$("fy").value + (+$("fh").value)/2;
+  const w=Math.min(100,Math.max(20,+$("fw").value*k));
+  const h=Math.min(60, Math.max(8, +$("fh").value*k));
+  $("fw").value=Math.round(w); $("fh").value=Math.round(h);
+  $("fx").value=Math.round(Math.min(90,Math.max(0,cx-w/2)));
+  $("fy").value=Math.round(Math.min(92,Math.max(0,cy-h/2)));
+  ["fx","fy","fw","fh"].forEach(k2=>
+    $("v"+k2[0].toUpperCase()+k2.slice(1)).textContent=$(k2).value);
+  render();
+}
+$("fBig").onclick=()=>boxScale(1.10);
+$("fSml").onclick=()=>boxScale(0.91);
+
 [["fx","vFx",0],["fy","vFy",0],["fw","vFw",0],["fh","vFh",0]]
 .forEach(([id,out,dec])=>{
   $(id).addEventListener("input",()=>{
@@ -1597,6 +1623,7 @@ $("cSub").addEventListener("input",()=>{S.colSub=1;render();});
 $("cReset").onclick=()=>{ S.colName=S.colSub=null; applyTplColors(); render(); };
 $("lReset").onclick=()=>{
   S.txt=JSON.parse(JSON.stringify(TXT_DEF));
+  $("ffs").value=0; $("vFfs").textContent="تلقائي";
   const d={fx:10,fy:34,fw:80,fh:26};
   for(const k in d){ $(k).value=d[k];
     $("v"+k[0].toUpperCase()+k.slice(1)).textContent=d[k]; }
