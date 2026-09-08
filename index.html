@@ -167,6 +167,7 @@ progress{width:100%;height:10px;margin-top:9px}
   <button id="tPhoto"><b>🖼</b>صورة</button>
   <button id="tBg"><b>🎨</b>تصميم خاص</button>
   <button id="tReset"><b>↺</b>تصفير</button>
+  <button id="tSide"><b>🔄</b>وجه/ظهر</button>
   <button id="tPrint" class="t-print"><b>🖨</b>طباعة</button>
   <button id="tSave"><b>💾</b>حفظ صورة</button>
   <button id="tPdf"><b>📄</b>PDF</button>
@@ -336,6 +337,44 @@ progress{width:100%;height:10px;margin-top:9px}
       <div class="sld"><div class="top"><span>ارتفاعها</span><b id="vFh">26</b></div>
         <input type="range" id="fh" min="8" max="60" step="1" value="26"></div>
       <div class="row"><button class="tiny" id="lReset">↺ التخطيط الافتراضي</button></div>
+    </div>
+  </section>
+
+  <section id="s7" class="closed">
+    <h2>ظهر الغلاف <span class="chev">▼</span></h2>
+    <div class="body">
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px">
+        <input type="checkbox" id="backOn" style="width:18px;height:18px" checked>
+        تفعيل ظهر الغلاف</label>
+      <p class="note" style="margin-top:8px">يُضاف تلقائياً كآخر صفحة عند حفظ الدفتر أو PDF</p>
+
+      <label class="f">خلفية الظهر</label>
+      <select class="fld" id="backBg">
+        <option value="same">نفس خلفية الوجه</option>
+        <option value="plain">لون فاتح بسيط</option>
+        <option value="tpl">القالب الجاهز فقط</option>
+      </select>
+
+      <label class="f">سطر ١ (اسم المكتبة مثلاً)</label>
+      <input class="fld" id="bL1" value="مكتبة النور للطباعة">
+      <label class="f">سطر ٢ (الهاتف)</label>
+      <input class="fld" id="bL2" value="07700000000">
+      <label class="f">سطر ٣ (عبارة)</label>
+      <input class="fld" id="bL3" value="نتمنى لك عاماً دراسياً موفقاً">
+
+      <div class="sld" style="margin-top:10px">
+        <div class="top"><span>موضع الكتلة</span><b id="vBy">62</b></div>
+        <input type="range" id="bY" min="10" max="92" step="1" value="62"></div>
+      <div class="sld"><div class="top"><span>حجم الخط</span><b id="vBs">4.6</b></div>
+        <input type="range" id="bS" min="2" max="12" step="0.2" value="4.6"></div>
+
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-top:4px">
+        <input type="checkbox" id="bFrame" style="width:18px;height:18px" checked>
+        إطار وزخرفة على الظهر</label>
+
+      <div class="row" style="margin-top:10px">
+        <button class="tiny" id="bPreview" style="flex:1">👁 معاينة الوجه / الظهر</button>
+      </div>
     </div>
   </section>
 
@@ -828,14 +867,30 @@ const SUBJECTS={
 function fieldsBox(x,W,H,X,Y,BW,BH,rows,line,ink,fs){
   x.fillStyle="rgba(255,255,255,.82)"; roundRect(x,X,Y,BW,BH,W*.035); x.fill();
   dashedRect(x,X+W*.012,Y+W*.012,BW-W*.024,BH-W*.024,line,Math.max(2,W*.005),W*.018);
-  x.textBaseline="middle"; x.direction="rtl";
+
+  const n=Math.max(1,rows.length);
+  // حجم الخط: إمّا المحدد يدوياً أو يُحسب ليناسب ارتفاع الخانة
+  const auto = (BH/n)*0.42;
+  const size = fs ? fs : Math.min(W*.055, auto);
+  const step = BH/(n+0.35);
+  x.direction="rtl";
+
   rows.forEach((r,i)=>{
-    const y=Y+BH*(i+.62)/(rows.length+.25);
-    x.font="700 "+fs+"px "+AR; x.textAlign="right"; x.fillStyle=ink;
-    const t=r[0]+" :"; x.fillText(t, X+BW-W*.045, y);
-    const lx1=X+BW-W*.045-x.measureText(t).width-W*.02;
-    dottedLine(x,X+W*.05,lx1,y+fs*.34,line,Math.max(2,W*.004));
-    if(r[1]){ x.textAlign="center"; x.fillText(r[1],(X+W*.05+lx1)/2,y); }
+    const y = Y + step*(i+0.78);          // خط الأساس
+    x.font="700 "+size+"px "+AR;
+    x.textBaseline="alphabetic";
+    x.textAlign="right"; x.fillStyle=ink;
+    const lbl = r[0]+" :";
+    x.fillText(lbl, X+BW-W*.05, y);
+    const lw = x.measureText(lbl).width;
+    const x1 = X+BW-W*.05-lw-W*.022;
+    const x0 = X+W*.05;
+    // الخط المنقّط تحت مستوى الكتابة
+    dottedLine(x,x0,x1,y+size*0.30,line,Math.max(2,W*.0042));
+    if(r[1]){
+      x.textAlign="center";
+      x.fillText(r[1],(x0+x1)/2, y);
+    }
   });
 }
 
@@ -849,7 +904,7 @@ const FRAMES={
     centerText(x,title,W*.5,H*.175,W*.072,"#ffffff");
     flourish(x,W*.5,H*.255,W*.34,acc);
     if(sub&&ICONS[sub]) ICONS[sub](x,W,H);
-    if(rows) fieldsBox(x,W,H,W*s.fx,H*s.fy,W*s.fw,H*s.fh,rows,acc,t.text,W*.046);
+    if(rows) fieldsBox(x,W,H,W*s.fx,H*s.fy,W*s.fw,H*s.fh,rows,acc,t.text,s.ffs||0);
   },
   "شريط جانبي":(x,W,H,t,title,rows,sub,s)=>{
     const acc=t.sub, sw=W*.13;
@@ -865,7 +920,7 @@ const FRAMES={
     centerText(x,title,cx,H*.11,W*.085,t.title);
     flourish(x,cx,H*.175,W*.30,acc);
     if(sub&&ICONS[sub]) ICONS[sub](x,W-sw,H);
-    if(rows) fieldsBox(x,W,H,W*s.fx,H*s.fy,Math.min(W*s.fw,W-sw-W*s.fx-W*.03),H*s.fh,rows,acc,t.text,W*.044);
+    if(rows) fieldsBox(x,W,H,W*s.fx,H*s.fy,Math.min(W*s.fw,W-sw-W*s.fx-W*.03),H*s.fh,rows,acc,t.text,s.ffs||0);
   },
   "إطار مزخرف":(x,W,H,t,title,rows,sub,s)=>{
     const acc=t.sub;
@@ -880,7 +935,7 @@ const FRAMES={
     centerText(x,title,W*.5,H*.215,W*.085,t.title);
     flourish(x,W*.5,H*.295,W*.36,acc);
     if(sub&&ICONS[sub]) ICONS[sub](x,W,H);
-    if(rows) fieldsBox(x,W,H,W*s.fx,H*s.fy,W*s.fw,H*s.fh,rows,acc,t.text,W*.046);
+    if(rows) fieldsBox(x,W,H,W*s.fx,H*s.fy,W*s.fw,H*s.fh,rows,acc,t.text,s.ffs||0);
   }
 };
 
@@ -1290,12 +1345,14 @@ function centerText(x,text,cx,cy,px,color,weight){
   x.fillStyle=color; x.fillText(text,cx,cy);
 }
 
+const W_REF=1;   // يُضرب بعرض اللوحة داخل الرسم
 function state(){
   const n=id=>parseFloat($(id).value)||0;
   return {
     w:n("cw")||21, h:n("ch")||29.7,
     title:$("fTitle").value, name:$("fName").value,
     l2:$("fL2").value, l3:$("fL3").value, l4:$("fL4").value, l5:$("fL5").value,
+    ffs:n("ffs")>0 ? n("ffs")/100*W_REF : 0,
     fx:n("fx")/100, fy:n("fy")/100, fw:n("fw")/100, fh:n("fh")/100,
     cName:$("cName").value, cSub:$("cSub").value
   };
@@ -1324,7 +1381,8 @@ function buildCover(dpi, over){
     const sj=SUBJECTS[$("subject").value];
     FRAMES[fr](x,W,H,t,s.title,rows,sj?sj.icons:null,s);
     drawLayers(x,W,H,over);
-    if(s.l4) centerText(x,s.l4,W*.5,H*.68,W*.038,s.cSub,"600");
+    const T4=S.txt.l4;
+    if(s.l4 && T4 && T4.on) centerText(x,s.l4,W*T4.x/100,H*T4.y/100,W*T4.s/100,s.cSub,"600");
     return c;
   }
 
@@ -1396,16 +1454,66 @@ function drawLayers(x,W,H,over){
   });
 }
 
+
+/* ================= ظهر الغلاف ================= */
+S.side = "front";
+
+function buildBack(dpi){
+  const s=state(), t=TEMPLATES[S.tpl];
+  const W=cm2px(s.w,dpi), H=cm2px(s.h,dpi);
+  const c=document.createElement("canvas"); c.width=W; c.height=H;
+  const x=c.getContext("2d");
+
+  const mode=$("backBg").value;
+  if(mode==="plain"){
+    x.fillStyle=(t.page&&t.page.tint)||"#ffffff"; x.fillRect(0,0,W,H);
+  } else if(mode==="tpl" || !S.bg){
+    t.bg(x,W,H);
+  } else {
+    const k=Math.max(W/S.bg.width,H/S.bg.height);
+    const nw=S.bg.width*k, nh=S.bg.height*k;
+    x.drawImage(S.bg,(W-nw)/2,(H-nh)/2,nw,nh);
+  }
+
+  if($("bFrame").checked){
+    x.strokeStyle=t.sub; x.lineWidth=Math.max(2,W*.006);
+    roundRect(x,W*.07,H*.05,W*.86,H*.90,W*.05); x.stroke();
+    flourish(x,W*.5,H*.125,W*.30,t.sub);
+    flourish(x,W*.5,H*.895,W*.30,t.sub);
+  }
+
+  const by=+$("bY").value/100, bs=+$("bS").value/100*W;
+  const items=[[$("bL1").value,1.15,t.text],
+               [$("bL2").value,0.95,t.sub],
+               [$("bL3").value,0.85,t.sub]].filter(r=>r[0]);
+  items.forEach((r,i)=>{
+    centerText(x, r[0], W*.5, H*by + i*bs*1.7, bs*r[1], r[2], i?"600":"700");
+  });
+  return c;
+}
+
+$("tSide").onclick = $("bPreview").onclick = ()=>{
+  S.side = S.side==="front" ? "back" : "front";
+  toast(S.side==="front" ? "معاينة الوجه" : "معاينة الظهر");
+  render();
+};
+["backOn","backBg","bL1","bL2","bL3","bY","bS","bFrame"]
+  .forEach(id=>$(id).addEventListener("input",()=>{
+    if(id==="bY") $("vBy").textContent=$("bY").value;
+    if(id==="bS") $("vBs").textContent=(+$("bS").value).toFixed(1);
+    render();
+  }));
+
 /* ================= المعاينة ================= */
 let job=null;
 function render(){ clearTimeout(job); job=setTimeout(draw,110); }
 function draw(){
-  const c=buildCover(PREVIEW_DPI);
+  const c = (S.side==="back") ? buildBack(PREVIEW_DPI) : buildCover(PREVIEW_DPI);
   const pv=$("preview"); pv.width=c.width; pv.height=c.height;
   const px=pv.getContext("2d");
   px.drawImage(c,0,0);
   // مقبض تكبير/تصغير إطار الصورة المحددة (بالمعاينة فقط)
-  const L=S.layers[S.sel];
+  const L = (S.side==="back") ? null : S.layers[S.sel];
   if(L){
     const half=L.size/200;
     const hx=(L.x/100+half*.72)*c.width, hy=(L.y/100+half*.52)*c.height;
@@ -1426,7 +1534,8 @@ function draw(){
     px.stroke(); px.restore();
   }
   const s=state();
-  $("pinfo").textContent = s.w.toFixed(1)+" × "+s.h.toFixed(1)+" سم  |  طباعة "+PRINT_DPI+" DPI";
+  $("pinfo").textContent = (S.side==="back" ? "ظهر الغلاف  |  " : "") +
+    s.w.toFixed(1)+" × "+s.h.toFixed(1)+" سم  |  طباعة "+PRINT_DPI+" DPI";
 }
 
 ["cw","ch","fTitle","fName","fL2","fL3","fL4","fL5","blank"]
@@ -1676,7 +1785,8 @@ async function shareFile(blob,name,type){
 $("btnPrint").onclick = $("tPrint").onclick = async ()=>{
   busy(true,"جاري التحضير…"); await pause();
   try{
-    const c=buildCover(PRINT_DPI), b=await toBlob(c), s=state();
+    const c=(S.side==="back")?buildBack(PRINT_DPI):buildCover(PRINT_DPI);
+    const b=await toBlob(c), s=state();
     if(IOS){
       const pdf=buildPDF([{jpeg:await bytes(b),w:c.width,h:c.height}],s.w,s.h);
       busy(false);
@@ -1692,20 +1802,27 @@ $("btnPrint").onclick = $("tPrint").onclick = async ()=>{
 $("btnPdf").onclick = $("tPdf").onclick = async ()=>{
   busy(true,"جاري تحضير PDF…"); await pause();
   try{
-    const c=buildCover(PRINT_DPI), s=state();
-    const pdf=buildPDF([{jpeg:await bytes(await toBlob(c)),w:c.width,h:c.height}],s.w,s.h);
+    const s=state(); const pages=[];
+    const c=buildCover(PRINT_DPI);
+    pages.push({jpeg:await bytes(await toBlob(c)),w:c.width,h:c.height});
+    if($("backOn").checked){
+      const b=buildBack(PRINT_DPI);
+      pages.push({jpeg:await bytes(await toBlob(b)),w:b.width,h:b.height});
+    }
+    const pdf=buildPDF(pages,s.w,s.h);
     busy(false);
-    const nm=(state().name||"غلاف")+".pdf";
+    const nm=(s.name||"غلاف")+".pdf";
     if(IOS){ if(!await shareFile(pdf,nm,"application/pdf")) saveBlob(pdf,nm); }
-    else { saveBlob(pdf,nm); toast("تم حفظ PDF"); }
+    else { saveBlob(pdf,nm); toast("تم حفظ PDF ("+pages.length+" صفحة)"); }
   }catch(e){ busy(false); toast("تعذّر إنشاء PDF"); }
 };
 
 $("btnSave").onclick = $("tSave").onclick = async ()=>{
   busy(true,"جاري الحفظ…"); await pause();
   try{
-    const b=await toBlob(buildCover(PRINT_DPI)); busy(false);
-    const nm=(state().name||"غلاف")+".jpg";
+    const b=await toBlob((S.side==="back")?buildBack(PRINT_DPI):buildCover(PRINT_DPI));
+    busy(false);
+    const nm=(state().name||"غلاف")+(S.side==="back"?"_ظهر":"")+".jpg";
     if(IOS){ if(!await shareFile(b,nm,"image/jpeg")) saveBlob(b,nm); }
     else { saveBlob(b,nm); toast("تم حفظ الغلاف"); }
   }catch(e){ busy(false); toast("تعذّر الحفظ"); }
@@ -1794,6 +1911,10 @@ async function makeBook(withCover){
       const c=buildPage(PRINT_DPI,paperOpt(i));
       pages.push({jpeg:await bytes(await toBlob(c)),w:c.width,h:c.height});
       pr.value=i; await pause(0);
+    }
+    if(withCover && $("backOn").checked){
+      const b=buildBack(PRINT_DPI);
+      pages.push({jpeg:await bytes(await toBlob(b)),w:b.width,h:b.height});
     }
     const pdf=buildPDF(pages,s.w,s.h);
     busy(false); pr.style.display="none";
